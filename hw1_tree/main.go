@@ -72,10 +72,10 @@ func displayName(file os.FileInfo) string {
 	if file.IsDir() {
 		return fmt.Sprintf("%s", file.Name())
 	}
-	return fmt.Sprintf("%s (%s)", file.Name(), getDisplaySize(file))
+	return fmt.Sprintf("%s (%s)", file.Name(), displaySize(file))
 }
 
-func getDisplaySize(file os.FileInfo) string {
+func displaySize(file os.FileInfo) string {
 	if file.Size() == 0 {
 		return "empty"
 	}
