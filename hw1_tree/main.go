@@ -1,58 +1,81 @@
 package main
 
-import "os"
-import "io"
-import "io/ioutil"
-import "fmt"
-import "path/filepath"
-
-/*"fmt"
-"io"
-"os"
-"path/filepath"
-"strings"*/
+import (
+	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+)
 
 func dirTree(out io.Writer, path string, printFiles bool) error {
-	dir(out, path, []bool{}, printFiles)
+	err := dir(out, path, printFiles, []bool{})
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func dir(out io.Writer, path string, hasMoreChildren []bool, printFiles bool) {
-	files, _ := ioutil.ReadDir(path)
+func dir(out io.Writer, path string, printFiles bool, hasMoreChildren []bool) error {
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		return err
+	}
 
-	for fileIndex, file := range files {
-		if !printFiles && !file.IsDir() {
-			continue
-		}
+	filteredFiles := filter(files, printFiles)
 
-		for i := 0; i < len(hasMoreChildren); i++ {
-			if hasMoreChildren[i] {
-				fmt.Fprint(out, "│\t")
-			} else {
-				fmt.Fprint(out, "\t")
-			}
-		}
+	for fileIndex, file := range filteredFiles {
+		printPreviousLevelPadding(out, hasMoreChildren)
 
-		isLastFile := fileIndex == len(files)-1
+		isLastFile := fileIndex == len(filteredFiles)-1
 
-		if !isLastFile {
-			fmt.Fprint(out, "├───")
-		} else {
+		if isLastFile {
 			fmt.Fprint(out, "└───")
+		} else {
+			fmt.Fprint(out, "├───")
 		}
 
-		if file.IsDir() {
-			fmt.Fprintf(out, "%s\n", file.Name())
-		} else {
-			fmt.Fprintf(out, "%s (%s)\n", file.Name(), getSize(file))
-		}
+		fmt.Fprintln(out, displayName(file))
 
 		hasMoreChildrenCopy := append([]bool(nil), hasMoreChildren...)
-		dir(out, filepath.Join(path, file.Name()), append(hasMoreChildrenCopy, !isLastFile), printFiles)
+		dir(out, filepath.Join(path, file.Name()), printFiles, append(hasMoreChildrenCopy, !isLastFile))
+	}
+
+	return nil
+}
+
+func filter(files []os.FileInfo, withFiles bool) []os.FileInfo {
+	if withFiles {
+		return files
+	}
+
+	filtered := make([]os.FileInfo, 0, len(files))
+	for _, file := range files {
+		if file.IsDir() {
+			filtered = append(filtered, file)
+		}
+	}
+	return filtered
+}
+
+func printPreviousLevelPadding(out io.Writer, hasMoreChildren []bool) {
+	for i := 0; i < len(hasMoreChildren); i++ {
+		if hasMoreChildren[i] {
+			fmt.Fprint(out, "│\t")
+		} else {
+			fmt.Fprint(out, "\t")
+		}
 	}
 }
 
-func getSize(file os.FileInfo) string {
+func displayName(file os.FileInfo) string {
+	if file.IsDir() {
+		return fmt.Sprintf("%s", file.Name())
+	}
+	return fmt.Sprintf("%s (%s)", file.Name(), getDisplaySize(file))
+}
+
+func getDisplaySize(file os.FileInfo) string {
 	if file.Size() == 0 {
 		return "empty"
 	}
