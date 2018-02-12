@@ -27,8 +27,8 @@ func SingleHash(in, out chan interface{}) {
 	md5Mutex := sync.Mutex{}
 	for data := range in {
 		wg.Add(1)
-		go func(data2 interface{}) {
-			dataInt := data2.(int)
+		go func(data interface{}) {
+			dataInt := data.(int)
 			dataString := strconv.Itoa(dataInt)
 
 			crc32Chan := make(chan string)
