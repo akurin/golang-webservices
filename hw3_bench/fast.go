@@ -28,7 +28,6 @@ func FastSearch(out io.Writer) {
 	scanner := bufio.NewScanner(file)
 
 	seenBrowsers := make(map[string]bool, 114)
-	// foundUsers := ""
 
 	var foundUsersBuffer bytes.Buffer
 
