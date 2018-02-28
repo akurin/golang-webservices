@@ -186,7 +186,17 @@ func applyRequest(users []User, request SearchRequest) ([]User, error) {
 		return nil, err
 	}
 	var result []User
-	sort.Slice(users, sortFunc)
+
+	switch request.OrderBy {
+	case OrderByAsc:
+		sort.Slice(users, sortFunc)
+	case OrderByDesc:
+		sort.Slice(users, sortFunc)
+		reverse(users)
+	case OrderByAsIs:
+	default:
+		panic(fmt.Sprintf("Unexpected OrderBy value: %d", request.OrderBy))
+	}
 
 	usersMeetFilterCount := 0
 	for _, user := range users {
@@ -227,6 +237,13 @@ func sortFunc(users []User, orderField string) (func(i, j int) bool, error) {
 		}, nil
 	default:
 		return nil, fmt.Errorf("Unknown field '%s'", orderField)
+	}
+}
+
+func reverse(users []User) {
+	last := len(users) - 1
+	for i := 0; i < len(users)/2; i++ {
+		users[i], users[last-i] = users[last-i], users[i]
 	}
 }
 
