@@ -16,7 +16,7 @@ import (
 )
 
 func Test_Client_Finds_Users(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(XMLDatasetSearchServer))
+	server := httptest.NewServer(http.HandlerFunc(xmlDatasetSearchServer))
 	defer server.Close()
 
 	tests := []struct {
@@ -70,27 +70,8 @@ func Test_Client_Finds_Users(t *testing.T) {
 	}
 }
 
-func XMLDatasetSearchServer(w http.ResponseWriter, r *http.Request) {
-	dataset, err := readDataSet()
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	request, err := readSearchRequest(*r.URL)
-	if err != nil {
-		w.Write([]byte(err.Error()))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	users, err := applyRequest(dataset, request)
-	if err != nil {
-		w.Write([]byte(err.Error()))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	usersBytes, err := json.Marshal(users)
+func xmlDatasetSearchServer(w http.ResponseWriter, r *http.Request) {
+	usersBytes, err := searchInXMLDataSet(r)
 	if err != nil {
 		w.Write([]byte(err.Error()))
 		w.WriteHeader(http.StatusInternalServerError)
@@ -99,6 +80,29 @@ func XMLDatasetSearchServer(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(usersBytes)
+}
+
+func searchInXMLDataSet(r *http.Request) ([]byte, error) {
+	dataset, err := readDataSet()
+	if err != nil {
+		return nil, err
+	}
+	request, err := readSearchRequest(*r.URL)
+	if err != nil {
+		return nil, err
+	}
+
+	users, err := applyRequest(dataset, request)
+	if err != nil {
+		return nil, err
+	}
+
+	usersBytes, err := json.Marshal(users)
+	if err != nil {
+		return nil, err
+	}
+
+	return usersBytes, nil
 }
 
 func readDataSet() ([]User, error) {
