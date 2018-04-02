@@ -13,21 +13,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type Event struct {
-	Timestamp time.Time
-	Consumer  string
-	Method    string
-	Host      string
-}
-
-type Subscription struct {
-	Events chan Event
-}
-
-func (s Subscription) Dispose() {
-	close(s.Events)
-}
-
 type Logger struct {
 	nextInterceptors interceptors.ServerInterceptors
 	mutex            *sync.RWMutex
